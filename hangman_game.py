@@ -10,7 +10,7 @@ global variables: first containing all lowercase letters of the alphabet
                   last to initialize the total number of chances
 '''
 az_letters = string.ascii_lowercase
-letters_to_choose_from = az_letters
+remaining_letters_to_choose_from = az_letters
 number_of_fails_left = 8
 
 
@@ -53,6 +53,47 @@ def update_progress_to_user(word_in_play, progress_graphic, correct_letter_inds)
     print(f'Your progress: \'{updated_progress}\'')
     return updated_progress
 
+
+def play_game(available_word_list, letters_to_choose_from, starting_no_of_fails):
+    fails_left = starting_no_of_fails  # reset number of fails before each game to get the 'while' loop going
+    print("Here we go!")
+    correct_word = get_word_to_play(word_list)
+    game_progress_graphic = get_progress_graphic(available_word_list)
+    while fails_left > 0:
+        guess_check = True
+        while guess_check:
+            print(f'You have {len(letters_to_choose_from)} letters to pick from: {letters_to_choose_from}')
+            guess_input = input("Which letter do you think is in the word?\n").lower()
+            # check that the name input string contains only alphabetical characters
+            if guess_input.isalpha() and len(guess_input) == 1:
+                if guess_input in letters_to_choose_from:
+                    letters_to_choose_from = letters_to_choose_from.replace(guess_input, '')
+                    guess_check = False
+                    guess_letter_inds = check_guess_accuracy(guess_input, correct_word, fails_left)
+                    if len(guess_letter_inds) == 0:
+                        fails_left -= 1
+                        print(f'Sorry, you guessed wrong! You have {fails_left} chances left!')
+                        game_progress_graphic = update_progress_to_user(correct_word, game_progress_graphic,
+                                                                        guess_letter_inds)
+                        if fails_left == 0:
+                            print(f'Bad luck, you lost! The answer was \'{correct_word}\'!')
+                    else:
+                        game_progress_graphic = update_progress_to_user(correct_word, game_progress_graphic,
+                                                                        guess_letter_inds)
+                        if '_' not in game_progress_graphic:
+                            print(f'Congratulations,{name_input}! You\'ve won!')
+                            fails_left = 0
+                        else:
+                            print(
+                                f'Great work, keep going! You still have {fails_left} chances')
+                else:
+                    letters_to_choose_from = letters_to_choose_from.replace(guess_input, '')
+                    print(letters_to_choose_from, len(letters_to_choose_from))
+                    print(f"Try again! You've already used \'{guess_input}\' for a previous guess!")
+            else:
+                print(f"Try again! The input can only be a single letter! \'{guess_input}\' is NOT!")
+
+
 """
 End of functions, begin implementation
 """
@@ -69,52 +110,18 @@ while name_check:
         break
     print(f"Sorry! \'{name_input}\' is not a valid name! Please try again.")
 
+# write play game function????
 play_again_bool = True
-
 while play_again_bool:
     # need run play-query loop outside game, so will nest game loop inside play-query loop
     play_again_yn = input("Would you like to play? (type \'y\' or \'n\')\n").lower()
     if play_again_yn != 'y' and play_again_yn != 'n':
         print(f"Sorry! \'{play_again_yn}\' has to be \'y\' or \'n\' - please try again.")
     elif play_again_yn == 'n':
-        print("Bye! Hope you had fun!")
+        print(f"Bye,{name_input}! Hope you had fun!")
         break
     else:
-        print("Here we go!")
-        correct_word = get_word_to_play(word_list)
-        game_progress_graphic = get_progress_graphic(correct_word)
-        while number_of_fails_left > 0:
-            guess_check = True
-            while guess_check:
-                print(f'You have {len(letters_to_choose_from)} letters to pick from: {letters_to_choose_from}')
-                guess_input = input("Which letter do you think is in the word?\n").lower()
-                # check that the name input string contains only alphabetical characters
-                if guess_input.isalpha() and len(guess_input) == 1:
-                    if guess_input in letters_to_choose_from:
-                        letters_to_choose_from = letters_to_choose_from.replace(guess_input, '')
-                        guess_check = False
-                        guess_letter_inds = check_guess_accuracy(guess_input, correct_word, number_of_fails_left)
-                        if len(guess_letter_inds) == 0:
-                            number_of_fails_left -= 1
-                            print(f'Sorry, you guessed wrong! You have {number_of_fails_left} chances left!')
-                            game_progress_graphic = update_progress_to_user(correct_word, game_progress_graphic,
-                                                                            guess_letter_inds)
-                            if number_of_fails_left == 0:
-                                print(f'Bad luck, you lost! The answer was \'{correct_word}\'!')
-                        else:
-                            game_progress_graphic = update_progress_to_user(correct_word, game_progress_graphic,
-                                                                            guess_letter_inds)
-                            if '_' not in game_progress_graphic:
-                                print(f'Congratulations,{name_input}! You\'ve won!')
-                                number_of_fails_left = 0
-                            else:
-                                print(
-                                    f'Great work,{name_input}, keep going! You still have {number_of_fails_left} chances')
-                    else:
-                        letters_to_choose_from = letters_to_choose_from.replace(guess_input, '')
-                        print(letters_to_choose_from, len(letters_to_choose_from))
-                        print(f"Try again! You've already used \'{guess_input}\' for a previous guess!")
-                else:
-                    print(f"Try again! The input can only be a single letter! \'{guess_input}\' is NOT!")
+        play_game(word_list,remaining_letters_to_choose_from, number_of_fails_left)
+
 
 
