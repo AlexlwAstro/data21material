@@ -10,19 +10,29 @@ Can you accelerate past the car's top speed?
 """
 
 class Car:
-    def __init__(self, m_kg, p_bhp, top_speed, max_occ):
+    def __init__(self, m_kg, p_bhp, listed_top_speed, max_occ):
         self.mass = m_kg
         self.engine_power_bhp = p_bhp
         self.max_occupants = max_occ
-        self.top_speed = top_speed
+        self.top_speed = listed_top_speed
 
     # USING the metric horsepower, which is approximately 735.5 watts, for engine power
-    def calc_dynamics(self):
+    def calc_dynamics(self, pick_weight):
         p_w = 735.5*self.engine_power_bhp
         # assume constant drag coefficient, b where F_drag = b x speed
         # calculate using max. speed case, where F_drag = F_engine = engine power / top speed
         # units are bhp/(mph^2)
-        drag_coefficient = self._bhp / (self.top_speed ** 2)
+        drag_coefficient = self._bhp / (self.listed_top_speed ** 2)
+        pick_weight = input('How full will your car be when travelling? (0 = empty, 1 = half-full, 2 = fully loaded)')
+        if pick_weight == 0:  # minimum kerb weight
+
+        elif pick_weight == 1:  # half full
+
+        elif pick_weight == 2: # gross vehicle weight (max. weight)
+
+        else:
+            print(f"}")
+
 
         return p_w, drag_coefficient
 """
