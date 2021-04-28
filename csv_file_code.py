@@ -17,12 +17,13 @@ def extract_user_details(csv_name='user_details.csv'):
             csv_read_list = list(iter(csv_reader))
     except FileNotFoundError:
         print('Error! File not found!')
+    finally:
+        print('extraction ended')
     return csv_read_list
 
 
 def transform_user_details(iterable_csv):
     # only save first name, last name and email address
-    #iterable_csv =
     name_email_list = []
     # next(iterable_csv)
     csv_iterator = 0
@@ -32,14 +33,16 @@ def transform_user_details(iterable_csv):
             lastname_index = line.index('lastName')
             email_index = line.index('email')
         else:
-            name_email_list.append(f'{line[firstname_index]},{line[lastname_index]},{line[email_index]}')
+            name_email_list.append([line[firstname_index], line[lastname_index], line[email_index]])
         csv_iterator += 1
     return name_email_list
 
 
-def load_user_detail_to_file(input_list, output_file='new_details.txt'):
-    with open(output_file, 'w') as fw_out:
-        fw_out.writelines(f'{row}\n' for row in input_list)
+def load_user_detail_to_file(input_list, output_file='new_details.csv'):
+    with open(output_file, 'w', newline='') as fw_out:
+        csv_write_out = csv.writer(fw_out)
+        csv_write_out.writerows(input_list)
+        #fw_out.writelines(f'{row}\n' for row in input_list)
 
 # extract
 user_details_reader_list = extract_user_details()
