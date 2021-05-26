@@ -1,0 +1,583 @@
+AWS EMR (Elastic MapReduce) cluster creation
+effectively creates 3 instances of ec2
+but also connects them together
+AND installs hadoop
+EMR integrates well with S3
+
+If 'connection timed out' error in bash:
+- check that hadoop@<master public DNS> is correct address
+- check IP address in security group (SG)
+- check your actual IP address via web browser
+- change SG IP if necessary! (TURN OFF VPN FOR THIS!)
+
+mkdir local_input
+cd local_input/
+curl -O https://norvig.com/big.txt (note: capital O, not 0!)
+cd ..
+hdfs dfs -mkdir input ( make input dir in hdfs)
+hdfs dfs -put local_input/* input (move content of local_input on local machine to input in hdfs)
+curl -L bit.ly/sparta_wordcount -o wordcount.jar (download data (unpacked from URL form) from internet to wordcount.jar)
+hadoop jar wordcount.jar org.apache.hadoop.examples.WordCount input output
+(runs java script the do a word count for the .jar file in the 'input' folder
+will create output dir (='output' here) if it doesn't exist)
+
+hdfs dfs -ls output
+
+hdfs dfs -cat output/part-r-* > output.txt
+ls
+head output.txt
+exit  (leave EMR to local machine)
+ scp -i ~/.ssh/DataStudents.pem hadoop@18.197.32.74:~/output.txt ~/Downloads
+(ssh copy from hadoop to local machine Downloads folder)
+
+
+
+************PIG COMMANDS************
+pig -x local (gets you to grunt = pig shell)
+
+WITHIN GRUNT:
+index_raw = LOAD 'TSLA.csv' USING PigStorage(',') AS (date: chararray, open: float, high: float, low: float, close: float, adjclose: float, volume: int);
+(keywords in CAPS: good practice)
+index_values = FOREACH index_raw GENERATE date, high, low, volume;
+DUMP index_values;
+filtered_high = FILTER index_values BY high > 500.0F;
+(filter results to those with high > 500.0 (= a float)
+results_10 = LIMIT filtered_high 10;
+
+look at DESCRIBE results_10
+results_10: {date: chararray,high: float,low: float,volume: int}
+
+EXPLAIN results_10
+21/05/26 14:29:39 INFO Configuration.deprecation: io.bytes.per.checksum is deprecated. Instead, use dfs.bytes-per-checksum
+21/05/26 14:29:39 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:29:39 INFO optimizer.LogicalPlanOptimizer: {RULES_ENABLED=[AddForEach, ColumnMapKeyPrune, ConstantCalculator, GroupByConstParallelSetter, LimitOptimizer, LoadTypeCastInserter, MergeFilter, MergeForEach, NestedLimitOptimizer, PartitionFilterOptimizer, PredicatePushdownOptimizer, PushDownForEachFlatten, PushUpFilter, SplitFilter, StreamTypeCastInserter]}
+21/05/26 14:29:39 INFO rules.ColumnPruneVisitor: Columns pruned for index_raw: $1, $4, $5
+#-----------------------------------------------
+# New Logical Plan:
+#-----------------------------------------------
+results_10: (Name: LOStore Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+|
+|---index_values: (Name: LOForEach Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+    |   |
+    |   (Name: LOGenerate[false,false,false,false] Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+    |   |   |
+    |   |   date:(Name: Project Type: chararray Uid: 207 Input: 0 Column: (*))
+    |   |   |
+    |   |   high:(Name: Project Type: float Uid: 209 Input: 1 Column: (*))
+    |   |   |
+    |   |   low:(Name: Project Type: float Uid: 210 Input: 2 Column: (*))
+    |   |   |
+    |   |   volume:(Name: Project Type: int Uid: 213 Input: 3 Column: (*))
+    |   |
+    |   |---(Name: LOInnerLoad[0] Schema: date#207:chararray)
+    |   |
+    |   |---(Name: LOInnerLoad[1] Schema: high#209:float)
+    |   |
+    |   |---(Name: LOInnerLoad[2] Schema: low#210:float)
+    |   |
+    |   |---(Name: LOInnerLoad[3] Schema: volume#213:int)
+    |
+    |---results_10: (Name: LOLimit Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+        |   |
+        |
+        |---filtered_high: (Name: LOFilter Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+            |   |
+            |   (Name: GreaterThan Type: boolean Uid: 217)
+            |   |
+            |   |---high:(Name: Project Type: float Uid: 209 Input: 0 Column: 1)
+            |   |
+            |   |---(Name: Constant Type: float Uid: 216)
+            |
+            |---index_raw: (Name: LOForEach Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+                |   |
+                |   (Name: LOGenerate[false,false,false,false] Schema: date#207:chararray,high#209:float,low#210:float,volume#213:int)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]
+                |   |   |
+                |   |   (Name: Cast Type: chararray Uid: 207)
+                |   |   |
+                |   |   |---date:(Name: Project Type: bytearray Uid: 207 Input: 0 Column: (*))
+                |   |   |
+                |   |   (Name: Cast Type: float Uid: 209)
+                |   |   |
+                |   |   |---high:(Name: Project Type: bytearray Uid: 209 Input: 1 Column: (*))
+                |   |   |
+                |   |   (Name: Cast Type: float Uid: 210)
+                |   |   |
+                |   |   |---low:(Name: Project Type: bytearray Uid: 210 Input: 2 Column: (*))
+                |   |   |
+                |   |   (Name: Cast Type: int Uid: 213)
+                |   |   |
+                |   |   |---volume:(Name: Project Type: bytearray Uid: 213 Input: 3 Column: (*))
+                |   |
+                |   |---(Name: LOInnerLoad[0] Schema: date#207:bytearray)
+                |   |
+                |   |---(Name: LOInnerLoad[1] Schema: high#209:bytearray)
+                |   |
+                |   |---(Name: LOInnerLoad[2] Schema: low#210:bytearray)
+                |   |
+                |   |---(Name: LOInnerLoad[3] Schema: volume#213:bytearray)
+                |
+                |---index_raw: (Name: LOLoad Schema: date#207:bytearray,high#209:bytearray,low#210:bytearray,volume#213:bytearray)ColumnPrune:OutputUids=[209, 210, 213, 207]ColumnPrune:InputUids=[209, 210, 213, 207]ColumnPrune:RequiredColumns=[0, 2, 3, 6]RequiredFields:[0, 2, 3, 6]
+#-----------------------------------------------
+# Physical Plan:
+#-----------------------------------------------
+results_10: Store(fakefile:org.apache.pig.builtin.PigStorage) - scope-89
+|
+|---index_values: New For Each(false,false,false,false)[bag] - scope-88
+    |   |
+    |   Project[chararray][0] - scope-80
+    |   |
+    |   Project[float][1] - scope-82
+    |   |
+    |   Project[float][2] - scope-84
+    |   |
+    |   Project[int][3] - scope-86
+    |
+    |---results_10: Limit - scope-79
+        |
+        |---filtered_high: Filter[bag] - scope-75
+            |   |
+            |   Greater Than[boolean] - scope-78
+            |   |
+            |   |---Project[float][1] - scope-76
+            |   |
+            |   |---Constant(500.0) - scope-77
+            |
+            |---index_raw: New For Each(false,false,false,false)[bag] - scope-74
+                |   |
+                |   Cast[chararray] - scope-63
+                |   |
+                |   |---Project[bytearray][0] - scope-62
+                |   |
+                |   Cast[float] - scope-66
+                |   |
+                |   |---Project[bytearray][1] - scope-65
+                |   |
+                |   Cast[float] - scope-69
+                |   |
+                |   |---Project[bytearray][2] - scope-68
+                |   |
+                |   Cast[int] - scope-72
+                |   |
+                |   |---Project[bytearray][3] - scope-71
+                |
+                |---index_raw: Load(file:///home/hadoop/TSLA.csv:PigStorage(',')) - scope-61
+
+21/05/26 14:29:39 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:29:39 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 2
+21/05/26 14:29:39 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 2
+#--------------------------------------------------
+# Map Reduce Plan
+#--------------------------------------------------
+MapReduce node scope-90
+Map Plan
+Local Rearrange[tuple]{tuple}(false) - scope-92
+|   |
+|   Project[tuple][*] - scope-91
+|
+|---results_10: Limit - scope-79
+    |
+    |---filtered_high: Filter[bag] - scope-75
+        |   |
+        |   Greater Than[boolean] - scope-78
+        |   |
+        |   |---Project[float][1] - scope-76
+        |   |
+        |   |---Constant(500.0) - scope-77
+        |
+        |---index_raw: New For Each(false,false,false,false)[bag] - scope-74
+            |   |
+            |   Cast[chararray] - scope-63
+            |   |
+            |   |---Project[bytearray][0] - scope-62
+            |   |
+            |   Cast[float] - scope-66
+            |   |
+            |   |---Project[bytearray][1] - scope-65
+            |   |
+            |   Cast[float] - scope-69
+            |   |
+            |   |---Project[bytearray][2] - scope-68
+            |   |
+            |   Cast[int] - scope-72
+            |   |
+            |   |---Project[bytearray][3] - scope-71
+            |
+            |---index_raw: Load(file:///home/hadoop/TSLA.csv:PigStorage(',')) - scope-61--------
+Reduce Plan
+results_10: Store(file:/tmp/temp392178791/tmp-1909197176:org.apache.pig.impl.io.InterStorage) - scope-89
+|
+|---Limit - scope-96
+    |
+    |---New For Each(true)[bag] - scope-95
+        |   |
+        |   Project[tuple][1] - scope-94
+        |
+        |---Package(Packager)[tuple]{tuple} - scope-93--------
+Global sort: false
+----------------
+
+MapReduce node scope-97
+Map Plan
+Local Rearrange[tuple]{tuple}(false) - scope-100
+|   |
+|   Project[tuple][*] - scope-99
+|
+|---Load(file:/tmp/temp392178791/tmp-1909197176:org.apache.pig.impl.io.InterStorage) - scope-98--------
+Reduce Plan
+results_10: Store(fakefile:org.apache.pig.builtin.PigStorage) - scope-105
+|
+|---index_values: New For Each(false,false,false,false)[bag] - scope-88
+    |   |
+    |   Project[chararray][0] - scope-80
+    |   |
+    |   Project[float][1] - scope-82
+    |   |
+    |   Project[float][2] - scope-84
+    |   |
+    |   Project[int][3] - scope-86
+    |
+    |---Limit - scope-104
+        |
+        |---New For Each(true)[bag] - scope-103
+            |   |
+            |   Project[tuple][1] - scope-102
+            |
+            |---Package(Packager)[tuple]{tuple} - scope-101--------
+Global sort: false
+----------------
+
+ILLUSTRATE results_10
+21/05/26 14:30:40 INFO Configuration.deprecation: io.bytes.per.checksum is deprecated. Instead, use dfs.bytes-per-checksum
+21/05/26 14:30:40 INFO executionengine.HExecutionEngine: Connecting to hadoop file system at: file:///
+21/05/26 14:30:40 INFO Configuration.deprecation: io.bytes.per.checksum is deprecated. Instead, use dfs.bytes-per-checksum
+21/05/26 14:30:40 INFO optimizer.LogicalPlanOptimizer: {RULES_ENABLED=[ConstantCalculator, LoadTypeCastInserter, PredicatePushdownOptimizer, StreamTypeCastInserter], RULES_DISABLED=[AddForEach, ColumnMapKeyPrune, GroupByConstParallelSetter, LimitOptimizer, MergeFilter, MergeForEach, NestedLimitOptimizer, PartitionFilterOptimizer, PushDownForEachFlatten, PushUpFilter, SplitFilter]}
+21/05/26 14:30:40 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:40 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:40 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:40 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:40 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:40 INFO data.SchemaTupleFrontend: Key [pig.schematuple] is false, will not generate code.
+21/05/26 14:30:40 INFO data.SchemaTupleFrontend: Starting process to move generated code to distributed cacche
+21/05/26 14:30:40 INFO data.SchemaTupleFrontend: Distributed cache not supported or needed in local mode. Setting key [pig.schematuple.local.dir] with code temp directory: /tmp/1622039440952-0
+21/05/26 14:30:40 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:40 INFO data.SchemaTupleBackend: Key [pig.schematuple] was not set... will not generate code.
+21/05/26 14:30:40 INFO mapReduceLayer.PigMapOnly$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12] C:  R:
+21/05/26 14:30:40 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:40 INFO builtin.PigStorage: Using PigTextInputFormat
+21/05/26 14:30:40 INFO input.FileInputFormat: Total input files to process : 1
+21/05/26 14:30:40 INFO util.MapRedUtil: Total input paths to process : 1
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+(09/12/2019,336.589996,344.450012,335.079987,339.529999,339.529999,9023100)
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+(09/12/2019,336.589996,344.450012,335.079987,339.529999,339.529999,9023100)
+21/05/26 14:30:41 INFO mapReduceLayer.MRCompiler: File concatenation threshold: 100 optimistic? false
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size before optimization: 1
+21/05/26 14:30:41 INFO mapReduceLayer.MultiQueryOptimizer: MR plan size after optimization: 1
+21/05/26 14:30:41 INFO mapreduce.MRScriptState: Pig script settings are added to the job
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: mapred.job.reduce.markreset.buffer.percent is not set, set to default 0.3
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Reduce phase detected, estimating # of required reducers.
+21/05/26 14:30:41 INFO mapReduceLayer.JobControlCompiler: Setting Parallelism to 1
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigGenericMapReduce$Map: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+21/05/26 14:30:41 INFO util.SpillableMemoryManager: Selected heap (PS Old Gen) of size 699400192 to monitor. collectionUsageThreshold = 489580128, usageThreshold = 489580128
+21/05/26 14:30:41 WARN data.SchemaTupleBackend: SchemaTupleBackend has already been initialized
+21/05/26 14:30:41 INFO mapReduceLayer.PigMapReduce$Reduce: Aliases being processed per job phase (AliasName[line,offset]): M: index_raw[3,12],index_raw[-1,-1],index_values[4,15],filtered_high[5,16] C:  R: results_10[6,13]
+------------------------------------------------------------------------------------------------------------------------------------------------
+| index_raw     | date:chararray     | open:float     | high:float     | low:float     | close:float     | adjclose:float     | volume:int     |
+------------------------------------------------------------------------------------------------------------------------------------------------
+|               | 09/12/2019         | 336.59         | 344.45         | 335.08        | 339.53          | 339.53             | 9023100        |
+|               | 04/02/2020         | 882.96         | 968.99         | 833.88        | 887.06          | 887.06             | 60775600       |
+|               | 09/12/2019         | 336.59         | 344.45         | 335.08        | 339.53          | 339.53             | 9023100        |
+|               | 09/12/2019         | 336.59         | 344.45         | 335.08        | 339.53          | 339.53             | 9023100        |
+|               | 04/02/2020         | 882.96         | 968.99         | 833.88        | 887.06          | 887.06             | 60775600       |
+------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| index_values     | date:chararray     | high:float     | low:float     | volume:int     |
+-------------------------------------------------------------------------------------------
+|                  | 09/12/2019         | 344.45         | 335.08        | 9023100        |
+|                  | 04/02/2020         | 968.99         | 833.88        | 60775600       |
+|                  | 09/12/2019         | 344.45         | 335.08        | 9023100        |
+|                  | 09/12/2019         | 344.45         | 335.08        | 9023100        |
+|                  | 04/02/2020         | 968.99         | 833.88        | 60775600       |
+-------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| filtered_high     | date:chararray     | high:float     | low:float     | volume:int     |
+--------------------------------------------------------------------------------------------
+|                   | 04/02/2020         | 968.99         | 833.88        | 60775600       |
+|                   | 04/02/2020         | 968.99         | 833.88        | 60775600       |
+--------------------------------------------------------------------------------------------
+
+The limit now in use, 1, may have been changed for ILLUSTRATE purpose.
+-----------------------------------------------------------------------------------------
+| results_10     | date:chararray     | high:float     | low:float     | volume:int     |
+-----------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+
+
+AGGREGATION
+months = FOREACH index_values GENERATE SUBSTRING(date, 3, 10) AS month, volume;
+month_groups = GROUP months BY month;
+ILLUSTRATE month_groups;
+(output of month_groups produces a BAG of stuff including volumes
+therefore:)
+month_total = FOREACH month_group GENERATE group, SUM(months.volume) AS total;
+ ILLUSTRATE month_total;
+month_total = FOREACH month_groups GENERATE group, SUM(months.volume) AS total;
+ILLUSTRATE month_total;
+ordered_total = ORDER month_total BY total DESC;
+DUMP ordered_total;
+STORE ordered_total INTO 'tesla_monthly_volume' USING PigStorage(',');
+quit
+
+**** END OF GRUNT ****
+
+ls
+ls tesla_monthly_volume/
+cat tesla_monthly_volume/part-r-00000
+aws s3 cp s3://data-eng-resources/big-data/CAT.csv .
+(copies CAT.csv into current local directory)
+
+**** NOW GRUNT AGAIN ****
+tesla_raw = LOAD 'TSLA.csv' USING PigStorage(',') AS (date: chararray, open: float, high: float, low: float, close: float, adjclose: float, volume: int);
+cat_raw = LOAD 'CAT.csv' USING PigStorage(',') AS (date: chararray, open: float, high: float, low: float, close: float, adjclose: float, volume: int);
+tesla_close = FOREACH tesla_raw GENERATE date, close;
+cat_close = FOREACH cat_raw GENERATE date, close;
+joint_close = JOIN tesla_close BY date, cat_close BY date;
+ILLUSTRATE joint_close;
+diff = FOREACH joint_close GENERATE cat_close::date AS date, tesla_close::close - cat_close::close AS close_diff;
+EXPLAIN diff;
+quit
+**** END OF GRUNT ****

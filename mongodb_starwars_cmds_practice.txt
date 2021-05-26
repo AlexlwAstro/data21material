@@ -1,0 +1,151 @@
+for file in *.json
+> do
+> /c/'Program Files'/MongoDB/Tools/100/bin/mongoimport --db starwars --collection characters --jsonArray --file $file
+> done
+*** ALW: need '/c/...', NOT just 'c/...' for absolute path: first '/' take you to root!***
+db.characters.find({name:"Chewbacca"}, {name: 1, eye_color: 1})
+*** to exclude object id from result, need to add '_id: 0' to query
+db.characters.find({name: "Ackbar"}, {name: 1, "species.name": 1, _id:0})
+
+# find the name and homeworld for every Human in the collection
+db.characters.find({"species.name": "Human"},{name: 1, "homeworld.name": 1, _id:0})
+
+#name, birth year, species name for characters with blue eyes
+db.characters.find([{eye_color: "blue"},{"species.name": "Human"}],{name: 1, "birth_year": 1, "homeworld.name": 1, _id:0})
+
+# use $in operator and a list object to select multiple true conditions
+db.characters.find({eye_color: {$in: ['yellow', 'orange']}}, {name: 1, eye_color: 1, _id: 0})
+
+# match multiple attributes: use $and operator
+db.characters.find({$and: [{eye_color: "blue"},{gender: "male"}]},{name: 1, _id: 0})
+
+# use the $or operator: same NOTE: can nest $and and $or statements!
+db.characters.find({$or: [{eye_color: "blue"},{gender: "male"}]},{name: 1, _id: 0})
+
+# comparative operators: $gt, $lt, etc.
+# BUT heights are strings in jsons! Need to cast to a number!
+db.characters.find({{$toInt: height}: {$gt 200}}, {name: 1, height: 1, _id: 0})
+db.chardemo.find({height: {$toInt: height}}, {name: 1, height: 1, _id: 0})
+ $gt 200}
+db.chardemo.find({$toInt: height: $gt 200}, {name: 1, height: 1, _id: 0})
+db.chardemo.find({"$gt" : [{"$toInt": "height"},  200]}, {name: 1, height: 1, _id: 0})
+
+db.chardemo.find({$expr : {$gt : [{ $convert: { input: "$height", to: "int", onError: {error:true},onNull: {isnull:true} } } , 200]}}, {name: 1, height: 1, _id: 0})
+
+# David solution 1
+db.chardemo.update({height: "unknown"}, {$unset: {height: null}}, {multi: true}) # first, deal with unknowns
+db.chardemo.update({height: {$exists: true}}, {$set: {height: {$toInt : "$height"}}}) # then, do integer conversions
+
+# David solution 2 (use regex for sequence of digits only []+ means any number of things inside square brackets)
+db.chardemo.update({height: /^[0-9]+$/}, [{$set: {height: {$toInt: "$height"}}}], {multi: true})
+
+# following query works
+db.chardemo.find().forEach(function(data) {db.chardemo.update({"_id": data._id,"name": data.name}, {"$set": {"height": parseInt(data.height)}});})
+
+
+
+#mass
+db.chardemo.find({name: "Luke Skywalker"}, {name: 1, mass: 1, _id: 0})
+db.chardemo.find({},{name: 1, mass: 1, _id: 0})
+
+db.chardemo.update({mass: /(\d+),(?=\d{3}(\D|$))/g}, [{$set: {mass: {$toDouble: "$mass"}}}], {multi: true})
+#   /^[0-9](,[0-9])+$/
+#   /^\d{1,3}(,\d{3})*(\.\d+)?$/
+#   ,(?=[\d,]*\.\d{2}\b)
+#   /(\d+),(?=\d{3}(\D|$))/g
+
+#  david solution
+db.chardemo.update({mass: "1,358"},{$set: {mass: "1358"}})
+db.chardemo.update({mass: "unknown"},{$unset: {mass: null}},{multi: true})
+db.chardemo.update({mass: {$exists: true}}, [{$set: {mass: {"$toDouble": "$mass"}}}],{multi: true})
+
+#  $eq  $gt  $gte  $in  $lt  $lte  $ne  $nin <-- use these in expressions
+#="equal to", "greater than", "gt equal", "in that array", "less than", "lt equal", "not equal to", "not in array"
+# make queries with above expressions
+/^J/
+db.chardemo.find({"species.name": {$eq: "Human"}}, {name: 1, height: 1, _id: 0})
+
+# find patterns via regex
+db.characters.find({name: /Skywalker/}, {name:1, _id: 0})
+
+
+# AGGREGATING
+db.chardemo.aggregate([{$match: {"species.name": "Human", height: {$ne: NaN} }}, {$group: {_id: null, total: {$sum: "$height"}}}])
+db.chardemo.aggregate([{$match: {"species.name": "Human", height: {$ne: NaN} }}, {$group: {_id: "$gender", total: {$sum: "$height"}}}])
+db.characters.find({}, {name: 1, height: 1, _id: 0})
+
+# find max height per homeworld
+
+db.chardemo.aggregate([{$match: {height: {$ne: NaN}, "homeworld.name": {$ne: "unknown"}}}, {$group: {_id: "$homeworld.name", tallest: {$max: "$height"}}}])
+
+# Also, can do thing after AGGREGATING
+db.chardemo.aggregate([{$match: {height: {$ne: NaN}}}, {$group: {_id: "$homeworld.name", tallest: {$max: "$height"}}}, {$match: {_id: {$ne: "unknown"}}}])
+
+# find the average mass per species
+db.chardemo.aggregate([{ $group: {_id: "$species.name", avg_mass: {$avg: "$mass"}}}])
+db.chardemo.aggregate([ {$group: {_id: "$species.name", avg_mass: {$avg: "$mass"}, count: {$sum: 1}}}, {$match: {avg_mass: {$ne: "null"}}}, {$sort:{avg_mass: 1}} ])
+
+db.characters.find({}, {"species.name": 1, mass: 1, _id: 0})
+
+db.chardemo.find({"species.name": "Hutt"},{name: 1, "species.name": 1, mass: 1, _id: 0})
+#
+db.characters.distinct()
+db.characters.count() # doesn't work with aggregates though!
+db.characters.count({"species.name": "Human"})
+db.characters.estimatedDocumentCount() # computationally quicker count estimate
+
+# more exercise: Darth Vader objectid = 60a399b991e2a03a2f63bcea
+db.chardemo.find({name: /Vader/},{name:1})
+db.createCollection("starships")
+# fighter info
+name: "TIE Advanced x1",model: "Twin Ion Engine Advanced x1",manufacturer: "Sienar Fleet Systems",length: 9.2,max_atmosphering_speed: 1200,crew: 1,passengers: 0
+
+#insert pilot: Vader's objectid
+db.starships.insertOne({name: "TIE Advanced x1",model: "Twin Ion Engine Advanced x1",manufacturer: "Sienar Fleet Systems",length: 9.2,max_atmosphering_speed: 1200,crew: 1,passengers: 0, pilot: ObjectId("60a399b991e2a03a2f63bcea")})
+
+# get info from different collections
+db.starships.aggregate([
+{$lookup:{
+from: "chardemo",
+localField: "pilot",
+foreignField: "_id",
+as: "matchedPilot"
+}},{$project: {name: 1, model: 1, "matchedPilot.name": 1}}
+])
+# 'project' = display following parameters.
+
+
+# HOMEWORK:
+Add the Millenium Falcon to the starships collection. (Look up the data or make it up!). "Pilot" should be an array of Object IDs pointing to:
+Chewbacca
+Han Solo
+Lando Calrissian
+Nien Nunb
+
+# Pilot character IDs from chardemo:
+db.chardemo.find({name: /Chewbacca/},{name:1}) # ObjectId("60a399b66b30a88619a93393")
+db.chardemo.find({name: /Han Solo/},{name:1}) # ObjectId("60a399c3d4d13b12771974ec")
+db.chardemo.find({name: /Lando/},{name:1}) # ObjectId("60a399cb433bbe753774f7d4")
+db.chardemo.find({name: /Nunb/},{name:1}) #  ObjectId("60a399d2c8df4dc74b370c9f")
+# gives us -->
+[ObjectId("60a399b66b30a88619a93393"), ObjectId("60a399c3d4d13b12771974ec"), ObjectId("60a399cb433bbe753774f7d4"), ObjectId("60a399d2c8df4dc74b370c9f")]
+
+db.starships.insertOne({
+name: "Millenium Falcon",
+model: "modified YT-1300fp light freighter",
+manufacturer: "Corellian Engineering Corporation",
+length: 34.37,
+max_atmosphering_speed: 1050,
+crew: 2,
+passengers: 6,
+pilot: [ObjectId("60a399b66b30a88619a93393"), ObjectId("60a399c3d4d13b12771974ec"), ObjectId("60a399cb433bbe753774f7d4"), ObjectId("60a399d2c8df4dc74b370c9f")]})
+
+# THEN:
+db.starships.aggregate([
+{$lookup:{
+from: "chardemo",
+localField: "pilot",
+foreignField: "_id",
+as: "matchedPilot"
+}},{$project: {name: 1, model: 1, "matchedPilot.name": 1}}
+])

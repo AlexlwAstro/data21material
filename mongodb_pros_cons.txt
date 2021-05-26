@@ -1,0 +1,61 @@
+		ALW: About MongoDB
+
+		ALW: Why use MongoDB?
+The document data model is a powerful way to store and retrieve data that allows developers to move fast.
+MongoDB’s horizontal, scale-out architecture can support huge volumes of both data and traffic.
+MongoDB has a great user experience for developers who can install MongoDB and start writing code immediately.
+    MongoDB can be used everywhere by anyone:
+        For free through the open source community edition
+        In the largest data centers through the enterprise edition
+        In any of the major public clouds through MongoDB Atlas
+
+    MongoDB has developed a large and mature platform ecosystem, which means:
+        MongoDB has a worldwide community of developers and consultants, so it is easy to get help.
+        MongoDB works on all types of computing platforms, both on-premise and in the cloud (both private, and public clouds such as AWS, Azure, and Google Cloud)
+        MongoDB can be used from all major languages.
+        MongoDB can be accessed from all major ETL and data management systems.
+        MongoDB has enterprise-grade support.
+
+Why use MongoDB? Simply to go further and faster when developing software applications that have to handle data of all sorts in a scalable way.
+
+Thousands of companies like Bosch, Barclays, and Morgan Stanley run their businesses on MongoDB, and use it to handle their most demanding apps in areas like IoT, Gaming, Logistics, Banking, e-Commerce, and Content Management.
+
+MongoDB is a great choice if you need to:
+
+    Represent data with natural clusters and variability over time or in its structure
+    Support rapid iterative development.
+    Enable collaboration of a large number of teams
+    Scale to high levels of read and write traffic.
+    Scale your data repository to a massive size.
+    Evolve the type of deployment as the business changes.
+    Store, manage, and search data with text, geospatial, or time series dimensions.
+
+MongoDB as a company has grown because the number of use cases with these characteristics keep growing.
+
+****(above: https://www.mongodb.com/why-use-mongodb)
+
+		ALW: Which companies use MongoDB?
+Forbes, Toyota Europe, Sanoma, Barclays, RBS, KPMG, Verizon, HMRC, Adobe (mongodb website)
+Many tech startups
+
+
+		ALW: Which companies stopped using MongoDB?
+
+
+
+		ALW: Why not use MongoDB?
+
+It
+    ... loses data (sources: 1, 2)
+    ... in fact, for a long time, ignored errors by default and assumed every single write succeeded no matter what (which on 32-bits systems led to losing all data silently after some 3GB, due to MongoDB limitations)
+    ... is slow, even at its advertised usecases, and claims to the contrary are completely lacking evidence (sources: 3, 4)
+    ... forces the poor habit of implicit schemas in nearly all usecases (sources: 4)
+    ... has locking issues (sources: 4)
+    ... has an atrociously poor response time to security issues - it took them two years to patch an insecure default configuration that would expose all of your data to anybody who asked, without authentication (sources: 5)
+    ... is not ACID-compliant (sources: 6)
+    ... is a nightmare to scale and maintain
+    ... isn't even exclusive in its offering of JSON-based storage; PostgreSQL does it too, and other (better) document stores like CouchDB have been around for a long time (sources: 7, 8)
+
+For most cases, what you want is actually a relational database <-- IMPORTANT TO CONSIDER!
+
+(above: http://cryto.net/~joepie91/blog/2015/07/19/why-you-should-never-ever-ever-use-mongodb/)

@@ -1,0 +1,11 @@
+my presentation feedback from David
+
+we fell into trap of not knowing audience - CRUCIAL!
+more useful - "we had 1 day sprints with sprint retrospectives"
+more details on implementation - WHAT WE ACTUALLY DID!
+logging DEBUG level outputs helps for products
+include 'requirements.txt' file in main directory with Python module installation requirements
+classes directory with file for each class - small-ish classes please!
+COMMENTS PLEASE!!!
+well-named files!
+alawys having __init.py file for package running

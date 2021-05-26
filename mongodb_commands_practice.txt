@@ -1,0 +1,77 @@
+db.createCollection("trainees", {
+	validator: {
+		$jsonSchema: {
+			bsonType:"object",
+			required: ["name", "year", "address"],
+			properties: {
+				name: {
+					bsonType: "string",
+					description: "required string"
+				},
+				year: {
+          bsonType: "int",
+          minimum: 2021,
+          maximum: 3021,
+          description: "required integer"
+        },
+        score: {
+          bsonType: "double",
+          description: "optional double"
+        },
+        address: {
+          bsonType: "object",
+          required: ["city"],
+          properties: {
+            city: {
+              bsonType: "string",
+              description: "required string"
+            }
+          }
+        }
+      }
+    }
+  },
+validationLevel: "strict",
+validationAction: "error"
+})
+
+db.createCollection("films", {
+	validator: {
+		$jsonSchema: {
+			bsonType:"object",
+			required: ["title", "year", "studio"],
+			properties: {
+				name: {
+					bsonType: "string",
+					description: "required string"
+				},
+				year: {
+          bsonType: "int",
+          minimum: 1800,
+          maximum: 2021,
+          description: "required integer"
+        },
+        RTscore: {
+        bsonType: "int",
+        minimum: 0,
+        maximum: 100,
+          description: "Rotten Tomatoes % score, optional double"
+        },
+        studio: {
+          bsonType: "object",
+          required: ["city"],
+          properties: {
+            city: {
+              bsonType: "string",
+              description: "required string"
+            }
+          }
+        }
+      }
+    }
+  },
+validationLevel: "strict",
+validationAction: "error"
+})
+
+df.films.insertMany()

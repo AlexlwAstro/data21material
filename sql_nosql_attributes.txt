@@ -1,0 +1,30 @@
+1. SQL, 2. NoSQL, examples of NoSQL: 
+
+Type
+1. Relational RDBMS 
+2. 'Not only SQL', realational OR non-relational (mostly NR)
+
+Language
+1. SQL
+2. Varies, link through APIs (application programming interfaces)
+
+Schema Design
+1. Table-like
+2. Dynamic & unstructured
+
+Scalability
+1. Vertical (upgrade in hardware to increase capacity)
+2. Vertical & horizontal (can add more machines in parallel and split data across these machines - commodity hardware)
+   Sharding - e.g. MMO games
+Non-relational scales up better than relational
+
+Structure
+1. Related tables
+2. Key-values, Documents, Column families, Graphs, etc. (depends on which type we choose!)
+
+
+TYPE OF NON-RELATIONAL DBs
+Key-value store DBs (like python dictionaries)
+Document store DBs
+Column family (like key-value + timestamp)
+Graph DBs

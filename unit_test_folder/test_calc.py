@@ -7,3 +7,5 @@ def test_add():
 def test_subtract():
     assert calc.subtract(4, 1) == 3
 
+print(test_add())
+

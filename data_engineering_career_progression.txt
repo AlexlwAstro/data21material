@@ -1,0 +1,35 @@
+data engineering career progression
+
+DO YOUR OWN RESEARCH!!!
+
+DevOps n=blend development & operations - infrastructure as code
+
+WARNING: many 'data engineering' roles are actually DevOps roles - watch video for
+devops skills, practise! (e.g., Docker, Jenkins)
+
+Career progression
+
+Specialising
+Real-time data processing
+
+Automating
+Cloud tools - get experienced in at least one!
+Can get CERTIFIED in cloud tools
+EXAMPLES:
+-AWS solutions architect, specialties (require X years experience for these!)
+-Azure - more complicated certification chart, including data analysis, science, more AI & ML-based, etc.
+-GoogleCloud - more basic certifications at first.
+
+sparta has annual budget for training costs
+
+CAREER PROGRESSION:
+2+ years - junior data engineer
+3-5 years - lose 'junior' tag
+7-10 years - senior data engineer
+maybe say 'experienced data engineer'
+
+DATA SCIENCE - more machine-learning based
+Can be part of data & analytics team - bit of everything - engineering, science, analysis
+DBA - database administrator - tough - you vs. all database users
+DATA ARCHITECT - designing large data systems - working out requirements, data sources, etc. at a large scale. Sort of DBA + engineer
+SOLUTIONS ARCHITECT - oversseing entire infrastructure - DBA + engineer + DevOps
