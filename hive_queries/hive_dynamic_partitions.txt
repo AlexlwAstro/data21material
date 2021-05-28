@@ -1,0 +1,33 @@
+CREATE DATABASE IF NOT EXISTS academy;
+
+SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+DROP TABLE academy.spartitions;
+DROP TABLE academy.spartan_placeholder;
+
+CREATE TABLE academy.spartitions (
+  spartan_id INT,
+  client_name STRING,
+  placement_start DATE
+) PARTITIONED BY (
+  city STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/academy/spartans';
+
+CREATE TABLE academy.spartan_placeholder (
+  spartan_id INT,
+  client_name STRING,
+  placement_start DATE,
+  city STRING
+)
+
+
+
+LOAD DATA LOCAL INPATH '/home/hadoop/spartan_all.csv'
+OVERWRITE INTO TABLE academy.spartan_placeholder;
+
+INSERT OVERWRITE TABLE academy.spartitions PARTITION (city)
+SELECT spartan_id, client_name, placement_start FROM academy.spartan_placeholder;
+
+SELECT * FROM academy.spartitions;

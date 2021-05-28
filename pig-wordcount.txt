@@ -1,0 +1,26 @@
+-- pig wordcount (single line comment)
+
+/*
+this is a
+multiline comment
+*/
+
+lines = LOAD 's3://data-eng-resources/big-data/big.txt' AS (line:chararray);
+words = FOREACH lines GENERATE FLATTEN(TOKENIZE(line)) AS word;
+grouped = GROUP words BY word;
+wordcount = FOREACH grouped GENERATE group, COUNT(words) AS count;
+wordcountorder = ORDER wordcount BY count DESC;
+STORE wordcountorder INTO 's3://data-eng-resources/pig-wordcount';
+QUIT
+
+
+people
+AS (BusinessEntityID:int, NationalIDNumber:int, LoginID:chararray, OrganizationNode:chararray, OrganizationLevel:int, JobTitle:chararray, BirthDate:datetime, MaritalStatus:chararray, Gender:chararray, HireDate:datetime, SalariedFlag:int, VacationHours:int, SickLeaveHours:int, CurrentFlag:int, rowguid:chararray, ModifiedDate:datetime)
+employees
+AS (BusinessEntityID:int, PersonType:chararray, NameStyle:int, Title:chararray, FirstName:chararray, MiddleName:chararray, LastName:chararray, Suffix:chararray, EmailPromotion:int, AdditionalContactInfo:chararray, Demographics:chararray, rowguid:chararray, ModifiedDate:datetime)
+territories
+AS (TerritoryID:int, Name:chararray, CountryRegionCode:chararray, Group:chararray, SalesYTD:float, SalesLastYear:float, CostYTD:float, CostLastYear:float,rowguid:chararray,ModifiedDate:datatime)
+salespeople
+AS (BusinessEntityID:int, TerritoryID:int, SalesQuota:int, Bonus:int, CommissionPct:float, SalesYTD:float, SalesLastYear:float, rowguid:chararray, ModifiedDate:datetime)
+
+CONCAT( UPPER(SUBSTR(MiddleName,0,0)),'.' )

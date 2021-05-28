@@ -4,6 +4,9 @@ but also connects them together
 AND installs hadoop
 EMR integrates well with S3
 
+TO GET INTO EMR IN BASH!
+ssh -i ~/.ssh/DataStudents.pem hadoop@<public IP machine address>
+
 If 'connection timed out' error in bash:
 - check that hadoop@<master public DNS> is correct address
 - check IP address in security group (SG)

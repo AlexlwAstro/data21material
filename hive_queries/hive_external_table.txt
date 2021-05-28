@@ -1,0 +1,7 @@
+CREATE EXTERNAL TABLE hp_houses (
+  id INT,
+  name STRING,
+  house STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/user/hadoop/hp-stuff';

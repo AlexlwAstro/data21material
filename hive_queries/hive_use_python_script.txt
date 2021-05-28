@@ -1,0 +1,35 @@
+DROP TABLE movie_ratings;
+CREATE TABLE movie_ratings(
+  userid INT,
+  movieid INT,
+  rating INT,
+  time_passed INT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+LOAD DATA LOCAL INPATH '/home/hadoop/movie_ratings.txt'
+OVERWRITE INTO TABLE movie_ratings;
+
+SELECT * FROM movie_ratings;
+
+DROP TABLE movie_days;
+
+CREATE TABLE movie_days (
+  userid INT,
+  movieid INT,
+  rating INT,
+  weekday INT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+ADD FILE /home/hadoop/weekday_mapper.py;
+
+INSERT OVERWRITE TABLE movie_days
+SELECT
+    TRANSFORM (userid, movieid, rating, time_passed)
+    USING 'python weekday_mapper.py'
+    AS (userid, movieid, rating, weekday)
+FROM movie_ratings;
+
+SELECT weekday, COUNT(*), AVG(rating)
+FROM movie_days
+GROUP BY weekday;

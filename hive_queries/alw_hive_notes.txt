@@ -1,0 +1,47 @@
+using hue - databases, warehouse, querying
+UI-based query editor
+runs as a local web server
+port forawrding, SSH tunneling to allow virtual machine to access browser via local machine
+Need browser addon FoxyProxy (for Firefox)
+
+Bash command to set up SSH tunnel
+ssh -i ~/.ssh/DataStudents.pem -N -D 8157 hadoop@3.67.93.85
+On AWS -> hardware, select cluster node
+get private DNS name
+paste in browser, with ':8888' (with FoxyProxy enabled!) -> gets you to Hue login page
+top tip - Hue username = 'hadoop' <- really important!
+password: Red=g00d
+Facebook people created Hive, SQL-like interface for querying - almost exactly the same as standard SQL queries
+is schema-on-read: check schema only when trying to read via query - data is not validated during write
+-> so very quick, but schema writing errors only crop up when you try to read!
+Hive CLI = Beeline (har-har!)
+
+Make a csv with a few lines of data for reading
+copy into EMR
+
+load data into query:
+"LOAD DATA LOCAL INPATH '/home/hadoop/example_sparta_clients_hue.csv'
+OVERWRITE INTO TABLE academy.spartans;"
+
+TO pull from hdfs:
+LOAD DATA INPATH '/home/hadoop/spartan_input' (directory with csv, need to -mkdir ad -put csv into new dir)
+
+Hive tool: partition, slices data based on column value, stores in separate files within table directory
+can partition for multiple columns
+
+(can 'nano' in hadoop interface)
+
+Hive partition by 'field': creates a new column (if necessary) called 'table.field'
+Stores partitioned data in HDFS using directories for each partition value
+i.e. database/table/field_val1, database/table/field_val2, etc.
+
+Hive can cluster data by field into buckets
+- need to load data into a non-bucketed table first!
+
+We have been dealing with internal tables - where Hive assumes 
+it owns the data - data, structures etc. can only be edited by Hive (at least without odd behviours)
+
+External table: no assumption of Hive ownership, so it uses metadata
+these are useful for data we want to query in Hive but want to edit with other software packages.
+DROP-ing external tables  in Hive just drops the Hive metadata
+to create, CREATE EXTERNAL TABLE

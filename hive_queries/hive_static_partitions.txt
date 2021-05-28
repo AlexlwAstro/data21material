@@ -1,0 +1,13 @@
+CREATE DATABASE IF NOT EXISTS academy;
+
+CREATE TABLE IF NOT EXISTS academy.spartans (
+  spartan_id INT,
+  client_name STRING,
+  placement_start DATE
+  )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+LOAD DATA INPATH '/user/hadoop/spartan_input'
+OVERWRITE INTO TABLE academy.spartans;
+
+SELECT * FROM academy.spartans;
