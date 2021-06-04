@@ -45,3 +45,8 @@ External table: no assumption of Hive ownership, so it uses metadata
 these are useful for data we want to query in Hive but want to edit with other software packages.
 DROP-ing external tables  in Hive just drops the Hive metadata
 to create, CREATE EXTERNAL TABLE
+
+HIVE 
+stores data in hdfs, provides tabular view of data, enabling analytics
+Known as a data warehousing tool because that's what its result looks like.
+For BIG DATA!

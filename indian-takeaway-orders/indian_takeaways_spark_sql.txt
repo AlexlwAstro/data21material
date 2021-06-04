@@ -1,0 +1,6 @@
+SPARK SQL DO FOR MONDAY - same as last time!
+THINK ABOUT ANALYSES
+play around with indian takeaway order csvs
+remember joins, views etc.!
+
+WEEKEND - REVISE SCRUM GUIDE!

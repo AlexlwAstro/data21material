@@ -1,0 +1,9 @@
+dat-eng-resources bucket -> vgsales.csv - video game sales data
+submit to David by Tuesday the Hive code to load it into a Hive table (from S3)
+partition by platform, clustering by name into 4 buckets
+there are obstacles - solve within Hive script please!
+
+
+n.b. AWS - can use Terraform to setup instances programmatically
+
+ALSO REVISION, DUMMKOPF!

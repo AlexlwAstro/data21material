@@ -33,7 +33,7 @@ exit  (leave EMR to local machine)
  scp -i ~/.ssh/DataStudents.pem hadoop@18.197.32.74:~/output.txt ~/Downloads
 (ssh copy from hadoop to local machine Downloads folder)
 
-
+scp -i ~/.ssh/DataStudents.pem ~/Downloads/vgsales.csv hadoop@3.126.153.205:~/vgdata
 
 ************PIG COMMANDS************
 pig -x local (gets you to grunt = pig shell)

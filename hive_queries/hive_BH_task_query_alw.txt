@@ -1,0 +1,75 @@
+CREATE DATABASE IF NOT EXISTS video_games_db;
+
+SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+DROP TABLE video_games_db.sales_data;
+DROP TABLE video_games_db.sales_placeholder;
+
+CREATE TABLE video_games_db.sales_data (
+rank_int INT,
+name STRING,
+year_int INT,
+genre STRING,
+publisher STRING,
+na_sales FLOAT,
+eu_sales FLOAT,
+jp_sales FLOAT,
+other_sales FLOAT,
+global_sales FLOAT
+) PARTITIONED BY (
+  platform STRING
+)
+CLUSTERED BY (name) INTO 4 BUCKETS
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+CREATE TABLE video_games_db.sales_placeholder (
+rank_int INT,
+name STRING,
+platform STRING,
+year_int INT,
+genre STRING,
+publisher STRING,
+na_sales FLOAT,
+eu_sales FLOAT,
+jp_sales FLOAT,
+other_sales FLOAT,
+global_sales FLOAT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+TBLPROPERTIES ("skip.header.line.count"="1");
+
+LOAD DATA LOCAL INPATH '/home/hadoop/vgdata/vgsales.csv'
+OVERWRITE INTO TABLE video_games_db.sales_placeholder;
+
+SELECT * FROM video_games_db.sales_placeholder;
+
+UPDATE video_games_db.sales_placeholder SET year_int = 0
+WHERE year_int IS NULL;
+UPDATE video_games_db.sales_placeholder SET name = SUBSTR(name,8)
+WHERE name LIKE CONCAT('.hack//','%');
+
+INSERT OVERWRITE TABLE video_games_db.sales_data PARTITION (platform)
+SELECT rank_int, name, platform, year_int, genre, publisher,
+na_sales, eu_sales, jp_sales, other_sales, global_sales
+FROM video_games_db.sales_placeholder;
+
+SELECT * FROM video_games_db.sales_data;
+
+
+REVIEW NOTES FROM CLASS DISCUSSION
+-Can't LOAD DATA into external tables! 
+-Dynamic partitions - partition field MUST go last!
+- need to skip header (well done me!)
+- I missed the commas within the data! - game names contain commas! eg. "Ed, Edd and Eddie"
+-> Hive thought it was three different fields
+ WOULDN'T have seen this in EXCEL!!!! -> had to look at raw data
+To deal with commas within field:
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+(optional?: WITH SERDEPROPERTIES 
+"separatorChar" = ",",
+"quoteChar" = "\"
+)
+)
+^ to find, use SELECT DISTINCT!!!
+(also converts all data to strings)
+shouldn't matter when reading placeholder table into partitioned take

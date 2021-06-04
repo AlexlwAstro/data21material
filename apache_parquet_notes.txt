@@ -1,0 +1,15 @@
+AVRO ('ave row)
+Open source
+Row storage
+Serialization / Compression
+Optimizing storage
+Schema stored with the data
+
+PARQUET
+Open-source
+Columnar storage
+Serialization / Compression
+Optimizing storage
+Schema stored with the data
+
+Basically, think about how you want to use your data before you pick storage type (columnar vs row-wise)

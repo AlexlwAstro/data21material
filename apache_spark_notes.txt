@@ -1,0 +1,26 @@
+Apache Spark
+Open source
+Developed at UC Berkeley, joined Apache in 2013
+Designed to be a unified analytics engine
+Meant to overcome limitations of MapReduce, such as difficulties in coding join statements, real-time processing (IMPORTANT!), others
+i.e. high level of functionality on top of MapReduce
+Has app interfaces for Python, Java, other languages
+Resilient Distributed Datasets (RDDs): immutable, read only datasets, distributed on remote clusters/machines
+Spark Rdd operations are lazy -> Spark is fault-tolerant (nothing kept in memory until called explicitly)
+Spark DataFrames
+SparkSQL (relevant)
+Spark streaming - real time insights from data streams
+MLib library - scalable machine learning library for big data, simple in same way as scikitlearn
+graphx library - graph database processing engine - analysis, processing at scale
+
+a lot of time to play aound with dataset in Databricks (like EMR but free!)
+works with AWS clusters, S3.
+code notebooks (python, R, SQL, Serva) stored separately from clusters - so don't lose on cluster termination!
+Anything in cluster memory will be terminated though!
+Stick with runtime version 8.2
+leave availability zone on 'Auto' (restricted to US zones)
+Python notebooks similar to Jupyter ones - separate & runs in cells!
+w/o databricks, need to find a way to link Spark to HDFS
+
+RDDs awkward with structured data, better to use Apache dataframes
+However, very useful for unstructured data!
